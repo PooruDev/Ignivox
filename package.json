@@ -1,0 +1,11 @@
+{
+  "name": "resqora",
+  "version": "0.1.0",
+  "description": "Emergency Response App",
+  "scripts": {
+    "build-css": "tailwindcss -i resources/src/css/main.css -o resources/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

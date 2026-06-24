@@ -1,0 +1,1220 @@
+<!doctype html>
+<!-- Declare the document type as HTML5 -->
+<html lang="en" class="h-full">
+  <!-- Set the language to English and apply full height class -->
+  <head>
+    <!-- Start of the head section containing metadata and links -->
+    <meta charset="UTF-8" />
+    <!-- Set the character encoding to UTF-8 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Set viewport for responsive design -->
+    <title>Ignivox</title>
+    <!-- Set the page title -->
+    <link rel="icon" href="resources/svgs/logo/IgnisLogo.svg" />
+    <!-- Link to the favicon -->
+    <script src="resources/sdk/element_sdk.js"></script>
+    <!-- Load the custom Element SDK script -->
+    <script src="resources/sdk/data_sdk.js"></script>
+    <!-- Load the custom Data SDK script -->
+    <link rel="stylesheet" href="resources/css/tailwind.css" />
+    <!-- Link to the built Tailwind CSS file -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <script
+      src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <!-- Load Lucide icons library -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+      crossorigin="anonymous"
+    />
+    <!-- Link to Leaflet CSS for maps -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+      crossorigin="anonymous"
+    ></script>
+    <!-- Load Leaflet JavaScript for maps -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Link to Google Fonts for DM Sans -->
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      * {
+        -webkit-tap-highlight-color: transparent;
+      }
+      .leaflet-control-zoom {
+        display: none !important;
+      }
+      #resqora-map {
+        z-index: 1;
+      }
+      .overlay-z {
+        z-index: 50;
+      }
+      .menu-z {
+        z-index: 60;
+      }
+      @keyframes single-pulse {
+        0% {
+          transform: scale(1);
+          opacity: 0.7;
+        }
+        100% {
+          transform: scale(2.5);
+          opacity: 0;
+        }
+      }
+      .pulse-once {
+        animation: single-pulse 1s ease-out forwards;
+      }
+    </style>
+    <style>
+      /* Additional styles for the page */
+      body {
+        box-sizing: border-box; /* Include padding and border in element's total width and height */
+      }
+    </style>
+  </head>
+  <body class="h-full bg-bg font-main text-text-primary">
+    <div id="app-root" class="h-full w-full flex flex-col overflow-auto">
+      <!-- HEADER -->
+      <header
+        id="app-header"
+        class="sticky top-0 bg-surface border-b border-border"
+        style="z-index: 40"
+      >
+        <div
+          class="max-w-lg mx-auto w-full px-4 py-3 flex flex-wrap items-center justify-between gap-3"
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <button
+              id="menu-btn"
+              class="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-gray-100 active:bg-gray-200"
+              aria-label="Menu"
+            >
+              <i data-lucide="menu" class="w-5 h-5 text-text-secondary"></i>
+            </button>
+            <img
+              src="resources/svgs/logo/IgnisLogo.svg"
+              alt="Ignivox Logo"
+              class="w-8 h-8 object-contain flex-shrink-0"
+            />
+            <div class="min-w-0">
+              <h1
+                id="header-title"
+                class="text-lg font-bold leading-tight text-text-primary truncate"
+              >
+                Ignivox
+              </h1>
+              <p
+                id="header-subtitle"
+                class="text-xs text-text-muted leading-tight truncate"
+              >
+                Emergency Response
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+      <!-- HAMBURGER MENU OVERLAY -->
+      <div
+        id="menu-overlay"
+        class="fixed inset-0 bg-black/30 menu-z hidden"
+        style="z-index: 59"
+      >
+        <nav
+          id="menu-panel"
+          class="absolute left-0 top-0 h-full w-72 bg-surface shadow-xl transform -translate-x-full transition-transform duration-200 flex flex-col"
+        >
+          <div class="px-5 py-5 border-b border-border">
+            <p class="font-bold text-lg">Ignivox</p>
+            <p class="text-xs text-text-muted">Emergency Response</p>
+          </div>
+          <div class="flex-1 py-2">
+            <button
+              class="menu-item w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-gray-50 active:bg-gray-100 text-sm text-text-secondary"
+            >
+              <i data-lucide="settings" class="w-4 h-4"></i> Settings
+            </button>
+            <button
+              class="menu-item w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-gray-50 active:bg-gray-100 text-sm text-text-secondary"
+            >
+              <i data-lucide="shield" class="w-4 h-4"></i> Help & Safety
+            </button>
+            <button
+              class="menu-item w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-gray-50 active:bg-gray-100 text-sm text-text-secondary"
+            >
+              <i data-lucide="info" class="w-4 h-4"></i> About
+            </button>
+            <div class="my-2 border-t border-border"></div>
+          </div>
+        </nav>
+      </div>
+      <!-- MAIN CONTENT -->
+      <main class="flex-1 p-4 flex flex-col gap-4 max-w-lg mx-auto w-full">
+        <!-- MAP CARD -->
+        <div
+          class="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden"
+        >
+          <div class="relative" style="height: 360px">
+            <div id="resqora-map" class="w-full h-full"></div>
+            <!-- Connection chip -->
+            <div
+              id="conn-chip"
+              class="absolute top-3 left-3 bg-surface/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5 text-xs font-medium border border-border shadow-sm"
+              style="z-index: 10"
+            >
+              <span
+                id="conn-dot"
+                class="w-2 h-2 rounded-full bg-success"
+              ></span>
+              <span id="conn-text">Online</span>
+            </div>
+          </div>
+          <div class="px-4 py-3 space-y-1">
+            <p
+              id="coverage-text"
+              class="text-sm font-semibold text-text-primary"
+            >
+              Surigao City Fire Emergency Coverage Area
+            </p>
+            <p id="location-text" class="text-xs text-text-secondary">
+              Surigao City, Surigao del Norte, Philippines
+            </p>
+            <div class="flex flex-wrap gap-3 pt-1">
+              <span class="text-xs text-gps-blue flex items-center gap-1"
+                ><i data-lucide="crosshair" class="w-3 h-3"></i> GPS ±<span
+                  id="gps-acc"
+                  >12</span
+                >m</span
+              >
+              <span
+                id="offline-queue-chip"
+                class="text-xs text-text-muted flex items-center gap-1 hidden"
+                ><i data-lucide="cloud-off" class="w-3 h-3"></i>
+                <span id="queue-count">0</span> queued</span
+              >
+              <span class="text-xs text-text-muted flex items-center gap-1"
+                ><i data-lucide="clock" class="w-3 h-3"></i>
+                <span id="last-loc-time">Just now</span></span
+              >
+            </div>
+          </div>
+        </div>
+        <!-- EMERGENCY ACTIONS (Default Mode) -->
+        <div
+          id="actions-card"
+          class="bg-surface rounded-2xl border border-border shadow-sm p-4 space-y-4"
+        >
+          <button
+            id="send-alert-btn"
+            class="w-full bg-emergency hover:bg-red-700 active:bg-red-800 text-white font-bold text-base uppercase tracking-wide py-4 rounded-full shadow-md transition-colors"
+            style="min-height: 52px"
+          >
+            <span id="send-label">Send Emergency Alert</span>
+            <span
+              id="send-progress"
+              class="ml-2 text-sm font-semibold bg-white/10 px-2 py-1 rounded-full hidden"
+              >0/3</span
+            >
+          </button>
+          <!-- Alert Modes -->
+          <div class="space-y-2">
+            <div class="flex flex-wrap gap-2">
+              <button
+                data-mode="sound"
+                class="alert-mode-btn flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-sm font-medium transition-colors border-emergency/30 bg-emergency/5 text-emergency"
+                style="min-height: 44px"
+              >
+                <i data-lucide="volume-2" class="w-4 h-4"></i> Sound
+              </button>
+              <button
+                data-mode="silent"
+                class="alert-mode-btn flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-sm font-medium transition-colors border-border text-text-secondary bg-surface hover:bg-gray-50"
+                style="min-height: 44px"
+              >
+                <i data-lucide="volume-x" class="w-4 h-4"></i> Silent
+              </button>
+              <button
+                data-mode="shake"
+                class="alert-mode-btn flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-sm font-medium transition-colors border-border text-text-secondary bg-surface hover:bg-gray-50"
+                style="min-height: 44px"
+              >
+                <i data-lucide="smartphone" class="w-4 h-4"></i> Shake
+              </button>
+            </div>
+            <p id="mode-helper" class="text-xs text-text-muted text-center">
+              Sound is selected by default. Tap again to deselect. Silent mutes
+              the alarm.
+            </p>
+          </div>
+        </div>
+        <!-- EMERGENCY HISTORY -->
+        <div
+          class="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden"
+        >
+          <button
+            id="history-toggle"
+            class="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 active:bg-gray-100"
+            style="min-height: 44px"
+          >
+            <span
+              class="text-sm font-semibold text-text-primary flex items-center gap-2"
+              ><i data-lucide="clock" class="w-4 h-4 text-text-muted"></i>
+              Emergency History</span
+            >
+            <i
+              data-lucide="chevron-down"
+              id="history-chevron"
+              class="w-4 h-4 text-text-muted transition-transform"
+            ></i>
+          </button>
+          <div id="history-list" class="border-t border-border">
+            <div id="history-items" class="divide-y divide-border"></div>
+            <p
+              id="history-empty"
+              class="px-4 py-6 text-center text-xs text-text-muted"
+            >
+              No emergency history yet.
+            </p>
+          </div>
+        </div>
+      </main>
+    </div>
+    <!-- CONFIRMATION OVERLAY -->
+    <div
+      id="confirm-overlay"
+      class="fixed inset-0 bg-black/50 overlay-z hidden flex items-center justify-center p-6"
+    >
+      <div
+        id="confirm-content"
+        class="bg-surface rounded-2xl p-6 w-full max-w-sm text-center space-y-3 shadow-xl"
+      ></div>
+    </div>
+    <!-- CANCEL CONFIRM OVERLAY -->
+    <div
+      id="cancel-confirm-overlay"
+      class="fixed inset-0 bg-black/50 overlay-z hidden flex items-center justify-center p-6"
+    >
+      <div
+        class="bg-surface rounded-2xl p-6 w-full max-w-sm text-center space-y-4 shadow-xl"
+      >
+        <i
+          data-lucide="alert-triangle"
+          class="w-10 h-10 text-warning mx-auto"
+        ></i>
+        <p class="text-lg font-bold text-text-primary">Cancel Emergency?</p>
+        <p class="text-sm text-text-secondary">
+          This will cancel your active emergency alert. Are you sure?
+        </p>
+        <div class="flex gap-3">
+          <button
+            id="cancel-no"
+            class="flex-1 py-3 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-gray-50"
+            style="min-height: 44px"
+          >
+            Go Back
+          </button>
+          <button
+            id="cancel-yes"
+            class="flex-1 py-3 rounded-full bg-emergency text-white text-sm font-medium hover:bg-red-700"
+            style="min-height: 44px"
+          >
+            Yes, Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+    <script>
+      // ===== STATE =====
+      const state = {
+        soundSelected: true,
+        silentSelected: false,
+        shakeEnabled: false,
+        historyOpen: true,
+        menuOpen: false,
+        cooldown: false,
+        incidents: [],
+        activeIncident: null,
+        expandedIncidents: new Set(),
+        editingIncidentId: null,
+        editDraft: null,
+        userLat: 9.7844,
+        userLng: 125.4977,
+        address: "Locating...",
+        connection: "online",
+        queuedAlerts: [],
+      };
+
+      let map, userMarker, coveragePolygon, manualPin;
+      let alarmAudio = null;
+
+      // ===== DEFAULT CONFIG =====
+      const defaultConfig = {
+        app_title: "Ignivox",
+        app_subtitle: "Emergency Response",
+        coverage_label: "Surigao City Fire Emergency Coverage Area",
+        location_label: "Surigao City, Surigao del Norte, Philippines",
+        background_color: "#F8FAFC",
+        surface_color: "#FFFFFF",
+        text_color: "#0F172A",
+        primary_action_color: "#DC2626",
+        secondary_action_color: "#475569",
+        font_family: "DM Sans",
+        font_size: 14,
+      };
+
+      const emergencyTypeOptions = [
+        "Fire Emergency",
+        "Rescue Operation",
+        "Hazardous Incident",
+        "Other Emergency",
+      ];
+
+      const severityOptions = ["Minor", "Moderate", "Severe"];
+
+      async function requestLocation() {
+        if (!navigator.geolocation) return null;
+        return new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000,
+          });
+        });
+      }
+
+      function formatReverseAddress(address) {
+        const parts = [];
+        if (address.suburb) parts.push(address.suburb);
+        if (address.road) parts.push(address.road);
+        if (!address.road && address.neighbourhood)
+          parts.push(address.neighbourhood);
+        if (address.city) parts.push(address.city);
+        else if (address.town) parts.push(address.town);
+        else if (address.village) parts.push(address.village);
+        return parts.filter(Boolean).join(", ");
+      }
+
+      async function reverseGeocode(lat, lng) {
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+          );
+          const data = await response.json();
+          if (data?.address) {
+            const formatted = formatReverseAddress(data.address);
+            return formatted || data.display_name || null;
+          }
+        } catch {
+          return null;
+        }
+        return null;
+      }
+
+      function setUserLocation(lat, lng, address = null) {
+        state.userLat = lat;
+        state.userLng = lng;
+        if (address) {
+          state.address = address;
+          state.incidents.forEach((inc) => {
+            if (
+              inc.address === "Locating..." ||
+              inc.address?.startsWith("Lat ")
+            ) {
+              inc.address = address;
+            }
+          });
+        }
+        if (map && userMarker) {
+          userMarker.setLatLng([lat, lng]);
+          map.setView([lat, lng], map.getZoom());
+        }
+        renderHistory();
+      }
+
+      async function initUserLocation() {
+        try {
+          const position = await requestLocation();
+          if (!position) throw new Error("No geolocation available");
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const address =
+            (await reverseGeocode(lat, lng)) ||
+            `Lat ${lat.toFixed(4)}, Lon ${lng.toFixed(4)}`;
+          setUserLocation(lat, lng, address);
+        } catch {
+          state.address = "Location unavailable";
+          renderHistory();
+        }
+      }
+
+      function handleIncidentDraftChange(select, incidentId, field) {
+        if (state.editingIncidentId !== incidentId) return;
+        state.editDraft = {
+          ...state.editDraft,
+          [field]: select.value,
+        };
+      }
+
+      function beginIncidentEdit(id) {
+        const incident = state.incidents.find((item) => item.id === id);
+        if (!incident || incident.status !== "ACTIVE") return;
+        state.editingIncidentId = id;
+        state.editDraft = {
+          type: incident.type,
+          severity: incident.severity,
+        };
+        renderHistory();
+      }
+
+      function cancelIncidentEdit(id) {
+        if (state.editingIncidentId !== id) return;
+        state.editingIncidentId = null;
+        state.editDraft = null;
+        renderHistory();
+      }
+
+      function saveIncidentChanges(id) {
+        const incident = state.incidents.find((item) => item.id === id);
+        if (!incident || state.editingIncidentId !== id || !state.editDraft)
+          return;
+
+        const changes = [];
+        ["type", "severity"].forEach((field) => {
+          const oldValue = incident[field];
+          const newValue = state.editDraft[field];
+          if (newValue && oldValue !== newValue) {
+            changes.push({ field, oldValue, newValue });
+            incident[field] = newValue;
+          }
+        });
+
+        if (!Array.isArray(incident.updates)) incident.updates = [];
+        changes.forEach(({ field, oldValue, newValue }) => {
+          incident.updates.unshift({
+            field,
+            oldValue,
+            newValue,
+            timestamp: new Date(),
+          });
+        });
+
+        if (changes.length > 0) {
+          incident.lastModified = new Date();
+          incident.notification = `Notified responders of updated ${changes
+            .map((c) => c.field)
+            .join(" and ")}.`;
+          notifyResponders(incident, "edit", null, null);
+        }
+
+        state.editingIncidentId = null;
+        state.editDraft = null;
+        renderHistory();
+      }
+
+      function notifyResponders(incident, field, oldValue, newValue) {
+        console.log(
+          `Responder notification: Incident ${incident.id} ${field} changed from ${oldValue} to ${newValue}.`,
+        );
+      }
+
+      // ===== ALARM MANAGEMENT =====
+      function initAlarm() {
+        alarmAudio = new Audio("resources/alarm/AlertSound.mp3");
+        alarmAudio.loop = true;
+        alarmAudio.preload = "auto";
+      }
+
+      function getTargetVolume() {
+        if (state.silentSelected) return 0;
+        if (state.soundSelected) return 1;
+        return 0.5;
+      }
+
+      function applyAlarmMode() {
+        if (!alarmAudio) return;
+        const vol = getTargetVolume();
+        alarmAudio.volume = vol;
+      }
+
+      function checkAndUpdateAlarm() {
+        if (!alarmAudio) return;
+        const hasActive = hasActiveEmergency();
+        if (hasActive) {
+          if (alarmAudio.paused) {
+            alarmAudio.currentTime = 0;
+            alarmAudio.play().catch(() => {});
+          }
+          applyAlarmMode();
+          if (getTargetVolume() === 0) {
+            alarmAudio.pause();
+          }
+        } else {
+          alarmAudio.pause();
+          alarmAudio.currentTime = 0;
+        }
+      }
+
+      // ===== ELEMENT SDK =====
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (config) => {
+          const c = (key) => config[key] || defaultConfig[key];
+          document.getElementById("app-root").style.backgroundColor =
+            c("background_color");
+          document.getElementById("app-root").style.fontFamily =
+            `${c("font_family")}, sans-serif`;
+          document.getElementById("app-root").style.color = c("text_color");
+          const fs = c("font_size");
+
+          document.getElementById("header-title").textContent = c("app_title");
+          document.getElementById("header-subtitle").textContent =
+            c("app_subtitle");
+          document.getElementById("coverage-text").textContent =
+            c("coverage_label");
+          document.getElementById("location-text").textContent =
+            c("location_label");
+
+          document.getElementById("app-header").style.backgroundColor =
+            c("surface_color");
+          document
+            .querySelectorAll(".bg-surface, #actions-card")
+            .forEach((el) => {
+              if (el.classList.contains("bg-surface") || el.id)
+                el.style.backgroundColor = c("surface_color");
+            });
+
+          document.getElementById("send-alert-btn").style.backgroundColor = c(
+            "primary_action_color",
+          );
+          document.getElementById("header-title").style.fontSize =
+            `${fs * 1.3}px`;
+          document.getElementById("header-subtitle").style.fontSize =
+            `${fs * 0.78}px`;
+          document.getElementById("coverage-text").style.fontSize = `${fs}px`;
+          document.getElementById("location-text").style.fontSize =
+            `${fs * 0.85}px`;
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () =>
+                config.background_color || defaultConfig.background_color,
+              set: (v) => {
+                config.background_color = v;
+                window.elementSdk.setConfig({ background_color: v });
+              },
+            },
+            {
+              get: () => config.surface_color || defaultConfig.surface_color,
+              set: (v) => {
+                config.surface_color = v;
+                window.elementSdk.setConfig({ surface_color: v });
+              },
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (v) => {
+                config.text_color = v;
+                window.elementSdk.setConfig({ text_color: v });
+              },
+            },
+            {
+              get: () =>
+                config.primary_action_color ||
+                defaultConfig.primary_action_color,
+              set: (v) => {
+                config.primary_action_color = v;
+                window.elementSdk.setConfig({ primary_action_color: v });
+              },
+            },
+            {
+              get: () =>
+                config.secondary_action_color ||
+                defaultConfig.secondary_action_color,
+              set: (v) => {
+                config.secondary_action_color = v;
+                window.elementSdk.setConfig({ secondary_action_color: v });
+              },
+            },
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (v) => {
+              config.font_family = v;
+              window.elementSdk.setConfig({ font_family: v });
+            },
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (v) => {
+              config.font_size = v;
+              window.elementSdk.setConfig({ font_size: v });
+            },
+          },
+        }),
+        mapToEditPanelValues: (config) =>
+          new Map([
+            ["app_title", config.app_title || defaultConfig.app_title],
+            ["app_subtitle", config.app_subtitle || defaultConfig.app_subtitle],
+            [
+              "coverage_label",
+              config.coverage_label || defaultConfig.coverage_label,
+            ],
+            [
+              "location_label",
+              config.location_label || defaultConfig.location_label,
+            ],
+          ]),
+      });
+
+      // ===== MAP INIT =====
+      function initMap() {
+        map = L.map("resqora-map", {
+          center: [9.7844, 125.4977],
+          zoom: 13,
+          zoomControl: false,
+          attributionControl: true,
+        });
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 18,
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+
+        // User location marker
+        const userIcon = L.divIcon({
+          className: "",
+          html: `<div style="width:16px;height:16px;background:#DC2626;border:3px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>`,
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+        });
+        userMarker = L.marker([state.userLat, state.userLng], {
+          icon: userIcon,
+        }).addTo(map);
+
+        setTimeout(() => map.invalidateSize(), 100);
+      }
+
+      // ===== MENU =====
+      function toggleMenu(open) {
+        state.menuOpen = open;
+        const overlay = document.getElementById("menu-overlay");
+        const panel = document.getElementById("menu-panel");
+        if (open) {
+          overlay.classList.remove("hidden");
+          requestAnimationFrame(
+            () => (panel.style.transform = "translateX(0)"),
+          );
+          disableMapInteraction(true);
+        } else {
+          panel.style.transform = "translateX(-100%)";
+          setTimeout(() => overlay.classList.add("hidden"), 200);
+          if (!anyOverlayOpen()) disableMapInteraction(false);
+        }
+      }
+
+      document
+        .getElementById("menu-btn")
+        .addEventListener("click", () => toggleMenu(true));
+      document.getElementById("menu-overlay").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("menu-overlay"))
+          toggleMenu(false);
+      });
+
+      // ===== ALERT MODE =====
+      document.querySelectorAll(".alert-mode-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const mode = btn.dataset.mode;
+          if (mode === "shake") {
+            const granted = await requestShakePermission();
+            state.shakeEnabled = granted ? !state.shakeEnabled : false;
+            if (!granted) {
+              document.getElementById("mode-helper").textContent =
+                "Shake access denied. Use Loud Speaker or Silent Alert instead.";
+            }
+          } else if (mode === "sound") {
+            state.soundSelected = !state.soundSelected;
+            if (state.soundSelected) state.silentSelected = false;
+          } else if (mode === "silent") {
+            state.silentSelected = !state.silentSelected;
+            if (state.silentSelected) state.soundSelected = false;
+          }
+          updateAlertModeUI();
+          checkAndUpdateAlarm();
+        });
+      });
+
+      function hasActiveEmergency() {
+        return state.incidents.some((inc) => inc.status === "ACTIVE");
+      }
+
+      function updateSendButtonState() {
+        const btn = document.getElementById("send-alert-btn");
+        const disabled = state.cooldown || hasActiveEmergency();
+        btn.disabled = disabled;
+        btn.classList.toggle("opacity-50", disabled);
+        btn.classList.toggle("cursor-not-allowed", disabled);
+        // If the button becomes disabled, reset the multi-click progress
+        if (disabled) resetSendClickProgress();
+      }
+
+      // ===== 3-CLICK CONFIRMATION LOGIC =====
+      let sendClickCount = 0;
+      let sendClickTimeout = null;
+      const SEND_CLICK_REQUIRED = 3;
+      const SEND_CLICK_RESET_MS = 4000; // 4 seconds of inactivity resets count
+
+      function updateSendProgressDisplay() {
+        const el = document.getElementById("send-progress");
+        if (!el) return;
+        if (sendClickCount <= 0) {
+          el.classList.add("hidden");
+        } else {
+          el.textContent = `${sendClickCount}/${SEND_CLICK_REQUIRED}`;
+          el.classList.remove("hidden");
+        }
+      }
+
+      function resetSendClickProgress() {
+        sendClickCount = 0;
+        if (sendClickTimeout) {
+          clearTimeout(sendClickTimeout);
+          sendClickTimeout = null;
+        }
+        updateSendProgressDisplay();
+      }
+
+      function updateAlertModeUI() {
+        document.querySelectorAll(".alert-mode-btn").forEach((btn) => {
+          const active =
+            btn.dataset.mode === "shake"
+              ? state.shakeEnabled
+              : btn.dataset.mode === "sound"
+                ? state.soundSelected
+                : btn.dataset.mode === "silent"
+                  ? state.silentSelected
+                  : false;
+          btn.className = `alert-mode-btn flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-sm font-medium transition-colors ${active ? "border-emergency/30 bg-emergency/5 text-emergency" : "border-border text-text-secondary bg-surface hover:bg-gray-50"}`;
+        });
+        const helperText = state.shakeEnabled
+          ? `Shake-to-Alert is active. Shake your device to send an alert automatically.`
+          : state.silentSelected
+            ? "Silent selected. Alarm will be muted."
+            : state.soundSelected
+              ? "Sound selected. Alarm will play loudly."
+              : "Sound and Silent deselected. Alarm will play at normal volume.";
+        document.getElementById("mode-helper").textContent = helperText;
+        updateSendButtonState();
+      }
+
+      // ===== SEND ALERT =====
+      document
+        .getElementById("send-alert-btn")
+        .addEventListener("click", () => {
+          // Only respond if the button is enabled (source of truth)
+          const btn = document.getElementById("send-alert-btn");
+          if (btn.disabled) return;
+
+          // Increment click counter and show progress
+          sendClickCount = Math.min(SEND_CLICK_REQUIRED, sendClickCount + 1);
+          updateSendProgressDisplay();
+
+          // Clear and restart inactivity timeout
+          if (sendClickTimeout) clearTimeout(sendClickTimeout);
+          sendClickTimeout = setTimeout(() => {
+            resetSendClickProgress();
+          }, SEND_CLICK_RESET_MS);
+
+          // Trigger send only on the final required click
+          if (sendClickCount >= SEND_CLICK_REQUIRED) {
+            // reset progress immediately
+            resetSendClickProgress();
+            triggerSendAlert("button");
+          }
+        });
+
+      function triggerSendAlert(source) {
+        if (navigator.vibrate) navigator.vibrate(100);
+        const incident = createIncident(
+          source === "shake" ? "shake" : "button",
+        );
+        state.activeIncident = incident;
+        state.incidents.unshift(incident);
+        state.expandedIncidents.add(incident.id);
+        startCooldown();
+        document.getElementById("mode-helper").textContent =
+          "Emergency alert sent. Help is on the way.";
+        setTimeout(updateAlertModeUI, 3000);
+        renderHistory();
+      }
+
+      async function requestShakePermission() {
+        if (
+          typeof DeviceMotionEvent !== "undefined" &&
+          typeof DeviceMotionEvent.requestPermission === "function"
+        ) {
+          try {
+            const permission = await DeviceMotionEvent.requestPermission();
+            return permission === "granted";
+          } catch {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      let lastShakeTime = 0;
+      function handleDeviceMotion(event) {
+        if (!state.shakeEnabled || state.cooldown) return;
+        const acc = event.accelerationIncludingGravity || event.acceleration;
+        if (!acc) return;
+        const x = acc.x || 0;
+        const y = acc.y || 0;
+        const z = acc.z || 0;
+        const magnitude = Math.sqrt(x * x + y * y + z * z);
+        if (magnitude > 25 && Date.now() - lastShakeTime > 1200) {
+          lastShakeTime = Date.now();
+          if (state.activeIncident) return;
+          triggerSendAlert("shake");
+        }
+      }
+
+      // ===== INCIDENTS =====
+      let incidentCounter = 0;
+      function createIncident(method) {
+        incidentCounter++;
+        return {
+          id: `INC-${Date.now()}`,
+          reportNum: incidentCounter,
+          type: "Fire Emergency",
+          severity: "Severe",
+          lat: state.userLat,
+          lng: state.userLng,
+          address: state.address,
+          status: "ACTIVE",
+          phase: "Sent",
+          method,
+          timestamp: new Date(),
+          active: true,
+          updates: [],
+          lastModified: null,
+          notification: null,
+        };
+      }
+
+      function startCooldown() {
+        state.cooldown = true;
+        updateSendButtonState();
+        setTimeout(() => {
+          state.cooldown = false;
+          updateSendButtonState();
+        }, 10000);
+      }
+
+      // Simulate status updates
+      function simulateStatusUpdates(incident) {
+        const statuses = ["Assigned", "En Route", "Arrived"];
+        let idx = 0;
+        const interval = setInterval(() => {
+          if (incident.status !== "ACTIVE" || idx >= statuses.length) {
+            clearInterval(interval);
+            return;
+          }
+          incident.phase = statuses[idx];
+          idx++;
+          renderHistory();
+        }, 8000);
+      }
+
+      // ===== HISTORY =====
+      document
+        .getElementById("history-toggle")
+        .addEventListener("click", () => {
+          state.historyOpen = !state.historyOpen;
+          document
+            .getElementById("history-list")
+            .classList.toggle("hidden", !state.historyOpen);
+          document.getElementById("history-chevron").style.transform =
+            state.historyOpen ? "rotate(180deg)" : "";
+        });
+
+      function renderHistory() {
+        const container = document.getElementById("history-items");
+        const empty = document.getElementById("history-empty");
+
+        if (state.incidents.length === 0) {
+          container.innerHTML = "";
+          empty.classList.remove("hidden");
+          updateSendButtonState();
+          checkAndUpdateAlarm();
+          return;
+        }
+        empty.classList.add("hidden");
+
+        container.innerHTML = state.incidents
+          .map((inc) => {
+            const expanded = state.expandedIncidents.has(inc.id);
+            const isActive = inc.status === "ACTIVE";
+            const phaseLabel = inc.phase || inc.status;
+            const statusColors = {
+              ACTIVE: "bg-emergency-light text-emergency",
+              Sent: "bg-warning-light text-warning",
+              Assigned: "bg-gps-blue-light text-gps-blue",
+              "En Route": "bg-gps-blue-light text-gps-blue",
+              Arrived: "bg-success-light text-success",
+              CANCELLED: "bg-gray-100 text-text-muted",
+              Cancelled: "bg-gray-100 text-text-muted",
+            };
+            const sc =
+              statusColors[phaseLabel] || "bg-gray-100 text-text-muted";
+            const time = inc.timestamp.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+            return `
+      <div class="relative ${isActive ? "border-l-2 border-l-emergency" : ""}">
+        <button onclick="toggleIncident('${inc.id}')" class="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 active:bg-gray-100 text-left" style="min-height:44px;">
+          <i data-lucide="flame" class="w-4 h-4 ${isActive ? "text-emergency" : "text-text-muted"} flex-shrink-0"></i>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-medium truncate">${inc.type}</span>
+              ${isActive ? '<span class="text-[10px] font-semibold px-1.5 py-0.5 bg-emergency text-white rounded">ACTIVE</span>' : ""}
+            </div>
+            <div class="flex items-center gap-2 mt-0.5">
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full font-medium ${sc}">${phaseLabel}</span>
+              <span class="text-[10px] text-text-muted">${time}</span>
+              <span class="text-[10px] text-text-muted">Report #${inc.reportNum}</span>
+            </div>
+          </div>
+          <i data-lucide="${expanded ? "chevron-up" : "chevron-down"}" class="w-3 h-3 text-text-muted flex-shrink-0"></i>
+        </button>
+        ${
+          expanded
+            ? `
+        <div class="px-4 pb-3 space-y-3">
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="space-y-1">
+              <span class="text-text-muted">Type:</span>
+              ${
+                isActive && state.editingIncidentId === inc.id
+                  ? `<select onchange="handleIncidentDraftChange(this, '${inc.id}', 'type')" class="w-full rounded-lg border border-border bg-surface px-2 py-1 text-xs text-text-primary">${emergencyTypeOptions
+                      .map(
+                        (option) =>
+                          `<option value="${option}"${option === state.editDraft?.type ? " selected" : ""}>${option}</option>`,
+                      )
+                      .join("")}</select>`
+                  : `<div class="text-text-primary">${inc.type}</div>`
+              }
+            </div>
+            <div class="space-y-1">
+              <span class="text-text-muted">Severity:</span>
+              ${
+                isActive && state.editingIncidentId === inc.id
+                  ? `<select onchange="handleIncidentDraftChange(this, '${inc.id}', 'severity')" class="w-full rounded-lg border border-border bg-surface px-2 py-1 text-xs text-text-primary">${severityOptions
+                      .map(
+                        (option) =>
+                          `<option value="${option}"${option === state.editDraft?.severity ? " selected" : ""}>${option}</option>`,
+                      )
+                      .join("")}</select>`
+                  : `<div class="text-text-primary">${inc.severity}</div>`
+              }
+            </div>
+            <div class="space-y-1">
+              <span class="text-text-muted">Location:</span>
+              <div class="text-text-primary">${inc.address}</div>
+            </div>
+            <div class="space-y-1">
+              <span class="text-text-muted">Responder Status:</span>
+              <div class="text-text-primary">${phaseLabel === "Sent" ? "Awaiting assignment..." : phaseLabel === "Assigned" ? "Assigned, preparing" : phaseLabel === "En Route" ? "On the way (~5 min)" : phaseLabel === "Arrived" ? "On scene" : phaseLabel === "Cancelled" ? "Alert cancelled" : "—"}</div>
+            </div>
+          </div>
+          <div class="border-t border-border"></div>
+          <div class="space-y-2 text-[10px] text-text-muted">
+            <div class="font-semibold text-xs text-text-primary">Update History</div>
+            <div class="rounded-2xl border border-border bg-gray-50 p-3 space-y-2 text-[10px] text-text-muted">
+              ${
+                inc.updates && inc.updates.length > 0
+                  ? inc.updates
+                      .slice(0, 3)
+                      .map(
+                        (update) =>
+                          `<div>• ${update.field} changed to ${update.newValue} at ${update.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>`,
+                      )
+                      .join("")
+                  : `<div>No updates yet.</div>`
+              }
+            </div>
+          </div>
+          <div class="flex gap-2">
+            ${isActive ? `<button onclick="${state.editingIncidentId === inc.id ? `saveIncidentChanges('${inc.id}')` : `beginIncidentEdit('${inc.id}')`}" class="flex-1 py-2 rounded-lg border border-border text-xs text-text-secondary hover:bg-gray-50 flex items-center justify-center gap-1" style="min-height:40px;"><i data-lucide="pencil" class="w-3 h-3"></i> ${state.editingIncidentId === inc.id ? "Save Changes" : "Edit Incident"}</button>` : ""}
+            ${isActive ? `<button onclick="requestCancelIncident('${inc.id}')" class="flex-1 py-2 rounded-lg border border-emergency/30 text-xs text-emergency hover:bg-emergency/5 flex items-center justify-center gap-1" style="min-height:40px;"><i data-lucide="x" class="w-3 h-3"></i> Cancel</button>` : ""}
+          </div>
+        </div>`
+            : ""
+        }
+      </div>`;
+          })
+          .join("");
+
+        lucide.createIcons();
+        updateSendButtonState();
+        checkAndUpdateAlarm();
+      }
+
+      window.toggleIncident = (id) => {
+        if (state.expandedIncidents.has(id)) state.expandedIncidents.delete(id);
+        else state.expandedIncidents.add(id);
+        renderHistory();
+      };
+
+      window.viewOnMap = (id) => {
+        const inc = state.incidents.find((i) => i.id === id);
+        if (inc && map) {
+          map.setView([inc.lat, inc.lng], 15);
+          // Single pulse
+          const pulseEl = document.createElement("div");
+          pulseEl.innerHTML = `<div style="width:30px;height:30px;border-radius:50%;border:2px solid #DC2626;background:transparent;" class="pulse-once"></div>`;
+          const pulseIcon = L.divIcon({
+            className: "",
+            html: pulseEl.innerHTML,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+          });
+          const pulseMarker = L.marker([inc.lat, inc.lng], {
+            icon: pulseIcon,
+          }).addTo(map);
+          setTimeout(() => map.removeLayer(pulseMarker), 1100);
+        }
+      };
+
+      let pendingCancelId = null;
+      window.requestCancelIncident = (id) => {
+        pendingCancelId = id;
+        document
+          .getElementById("cancel-confirm-overlay")
+          .classList.remove("hidden");
+        disableMapInteraction(true);
+      };
+
+      document.getElementById("cancel-no").addEventListener("click", () => {
+        document
+          .getElementById("cancel-confirm-overlay")
+          .classList.add("hidden");
+        if (!anyOverlayOpen()) disableMapInteraction(false);
+        pendingCancelId = null;
+      });
+
+      document.getElementById("cancel-yes").addEventListener("click", () => {
+        if (pendingCancelId) {
+          const inc = state.incidents.find((i) => i.id === pendingCancelId);
+          if (inc) {
+            inc.active = false;
+            inc.status = "CANCELLED";
+            inc.phase = "Cancelled";
+          }
+          if (
+            state.activeIncident &&
+            state.activeIncident.id === pendingCancelId
+          )
+            state.activeIncident = null;
+          pendingCancelId = null;
+          renderHistory();
+        }
+        document
+          .getElementById("cancel-confirm-overlay")
+          .classList.add("hidden");
+        if (!anyOverlayOpen()) disableMapInteraction(false);
+      });
+
+      // ===== CONFIRMATIONS =====
+      function showConfirmation(type, incident) {
+        const el = document.getElementById("confirm-content");
+        const overlay = document.getElementById("confirm-overlay");
+
+        if (type === "shake") {
+          el.innerHTML = `
+      <div class="w-14 h-14 rounded-full bg-success-light flex items-center justify-center mx-auto"><i data-lucide="check" class="w-7 h-7 text-success"></i></div>
+      <p class="text-lg font-bold text-text-primary">Alert Sent</p>
+      <div class="text-xs text-text-secondary space-y-1 text-left bg-gray-50 rounded-xl p-3">
+        <p><span class="text-text-muted">GPS:</span> ${incident.lat.toFixed(4)}, ${incident.lng.toFixed(4)}</p>
+        <p><span class="text-text-muted">Address:</span> ${incident.address}</p>
+        <p><span class="text-text-muted">Time:</span> ${incident.timestamp.toLocaleTimeString()}</p>
+      </div>
+      <p class="text-xs text-text-muted">Tap outside to dismiss</p>`;
+        } else if (type === "manual") {
+          el.innerHTML = `
+      <div class="w-14 h-14 rounded-full bg-success-light flex items-center justify-center mx-auto"><i data-lucide="check" class="w-7 h-7 text-success"></i></div>
+      <p class="text-lg font-bold text-text-primary">Fire Emergency Alert Sent</p>
+      <p class="text-sm text-text-secondary">Stay where you are. Help is on the way.</p>
+      <p class="text-xs text-text-muted">Incident ID: ${incident.id}</p>
+      <p class="text-xs text-text-muted">Tap outside to dismiss</p>`;
+        }
+
+        overlay.classList.remove("hidden");
+        disableMapInteraction(true);
+        lucide.createIcons();
+
+        if (incident) simulateStatusUpdates(incident);
+      }
+
+      document
+        .getElementById("confirm-overlay")
+        .addEventListener("click", (e) => {
+          if (e.target === document.getElementById("confirm-overlay")) {
+            document.getElementById("confirm-overlay").classList.add("hidden");
+            if (!anyOverlayOpen()) disableMapInteraction(false);
+          }
+        });
+
+      // ===== HELPERS =====
+      function disableMapInteraction(disable) {
+        if (!map) return;
+        if (disable) {
+          map.dragging.disable();
+          map.touchZoom.disable();
+          map.scrollWheelZoom.disable();
+        } else {
+          map.dragging.enable();
+          map.touchZoom.enable();
+          map.scrollWheelZoom.enable();
+        }
+      }
+
+      function anyOverlayOpen() {
+        return (
+          !document
+            .getElementById("confirm-overlay")
+            .classList.contains("hidden") ||
+          !document
+            .getElementById("cancel-confirm-overlay")
+            .classList.contains("hidden") ||
+          state.menuOpen
+        );
+      }
+
+      // ===== INIT =====
+      document.addEventListener("DOMContentLoaded", () => {
+        initMap();
+        initUserLocation();
+        initAlarm();
+        renderHistory();
+        updateAlertModeUI();
+        if ("DeviceMotionEvent" in window) {
+          window.addEventListener("devicemotion", handleDeviceMotion, false);
+        }
+        lucide.createIcons();
+      });
+    </script>
+  </body>
+</html>
